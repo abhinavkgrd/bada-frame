@@ -40,7 +40,7 @@ import { logUploadInfo } from 'utils/upload';
 import isElectron from 'is-electron';
 import ImportService from 'services/importService';
 
-const MAX_CONCURRENT_UPLOADS = 4;
+const MAX_CONCURRENT_UPLOADS = 1;
 const FILE_UPLOAD_COMPLETED = 100;
 
 class UploadManager {
