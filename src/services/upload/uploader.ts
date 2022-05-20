@@ -112,8 +112,16 @@ export default async function uploader(
 
         logUploadInfo(`uploadToBucket ${fileNameSize}`);
 
+        const currTime = new Date().getTime();
+
         const backupedFile: BackupedFile = await UploadService.uploadToBucket(
             encryptedFile.file
+        );
+
+        console.log(
+            `Time taken to upload ${fileNameSize} is ${
+                (new Date().getTime() - currTime) / 1000
+            } seconds`
         );
 
         const uploadFile: UploadFile = UploadService.getUploadFile(
