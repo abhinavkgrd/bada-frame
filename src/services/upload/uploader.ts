@@ -3,6 +3,7 @@ import { handleUploadError, CustomError } from 'utils/error';
 import { logError } from 'utils/sentry';
 import {
     fileAlreadyInCollection,
+    findSameFileInOtherCollection,
     shouldDedupeAcrossCollection,
 } from 'utils/upload';
 import UploadHttpClient from './uploadHttpClient';
@@ -14,14 +15,15 @@ import { FileWithCollection, BackupedFile, UploadFile } from 'types/upload';
 import { logUploadInfo } from 'utils/upload';
 import { convertBytesToHumanReadable } from 'utils/billing';
 import { sleep } from 'utils/common';
+import { addToCollection } from 'services/collectionService';
 
 interface UploadResponse {
     fileUploadResult: FileUploadResults;
     uploadedFile?: EnteFile;
+    skipDecryption?: boolean;
 }
 export default async function uploader(
     worker: any,
-    reader: FileReader,
     existingFilesInCollection: EnteFile[],
     existingFiles: EnteFile[],
     fileWithCollection: FileWithCollection
@@ -53,6 +55,25 @@ export default async function uploader(
             return { fileUploadResult: FileUploadResults.ALREADY_UPLOADED };
         }
 
+        const sameFileInOtherCollection = findSameFileInOtherCollection(
+            existingFiles,
+            metadata
+        );
+
+        if (sameFileInOtherCollection) {
+            logUploadInfo(
+                `same file in other collection found for  ${fileNameSize}`
+            );
+            const resultFile = Object.assign({}, sameFileInOtherCollection);
+            resultFile.collectionID = collection.id;
+            await addToCollection(collection, [resultFile]);
+            return {
+                fileUploadResult: FileUploadResults.UPLOADED,
+                uploadedFile: resultFile,
+                skipDecryption: true,
+            };
+        }
+
         // iOS exports via album doesn't export files without collection and if user exports all photos, album info is not preserved.
         // This change allow users to export by albums, upload to ente. And export all photos -> upload files which are not already uploaded
         // as part of the albums
@@ -65,11 +86,7 @@ export default async function uploader(
         }
         logUploadInfo(`reading asset ${fileNameSize}`);
 
-        const file = await UploadService.readAsset(
-            reader,
-            fileTypeInfo,
-            uploadAsset
-        );
+        const file = await UploadService.readAsset(fileTypeInfo, uploadAsset);
 
         if (file.hasStaticThumbnail) {
             metadata.hasStaticThumbnail = true;

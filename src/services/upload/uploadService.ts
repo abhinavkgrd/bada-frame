@@ -76,18 +76,17 @@ class UploadService {
             : getFilename(file);
     }
 
-    async getFileType(reader: FileReader, file: File | ElectronFile) {
-        return getFileType(reader, file);
+    async getFileType(file: File | ElectronFile) {
+        return getFileType(file);
     }
 
     async readAsset(
-        reader: FileReader,
         fileTypeInfo: FileTypeInfo,
         { isLivePhoto, file, livePhotoAssets }: UploadAsset
     ) {
         return isLivePhoto
-            ? await readLivePhoto(reader, fileTypeInfo, livePhotoAssets)
-            : await readFile(reader, fileTypeInfo, file);
+            ? await readLivePhoto(fileTypeInfo, livePhotoAssets)
+            : await readFile(fileTypeInfo, file);
     }
 
     async extractFileMetadata(
@@ -142,14 +141,14 @@ class UploadService {
                     file.localID
                 );
                 const fileUploadURL = await this.getUploadURL();
-                fileObjectKey = await UploadHttpClient.putFile(
+                fileObjectKey = await UploadHttpClient.putFileV2(
                     fileUploadURL,
                     file.file.encryptedData,
                     progressTracker
                 );
             }
             const thumbnailUploadURL = await this.getUploadURL();
-            const thumbnailObjectKey = await UploadHttpClient.putFile(
+            const thumbnailObjectKey = await UploadHttpClient.putFileV2(
                 thumbnailUploadURL,
                 file.thumbnail.encryptedData as Uint8Array,
                 null

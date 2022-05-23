@@ -157,7 +157,7 @@ class UploadManager {
             logUploadInfo(`parseMetadataJSONFiles function executed `);
 
             UIService.reset(metadataFiles.length);
-            const reader = new FileReader();
+
             for (const { file, collectionID } of metadataFiles) {
                 try {
                     logUploadInfo(
@@ -165,7 +165,6 @@ class UploadManager {
                     );
 
                     const parsedMetadataJSONWithTitle = await parseMetadataJSON(
-                        reader,
                         file
                     );
                     if (parsedMetadataJSONWithTitle) {
@@ -201,7 +200,6 @@ class UploadManager {
         try {
             logUploadInfo(`extractMetadataFromFiles executed`);
             UIService.reset(mediaFiles.length);
-            const reader = new FileReader();
             for (const { file, localID, collectionID } of mediaFiles) {
                 try {
                     const { fileTypeInfo, metadata } = await (async () => {
@@ -215,7 +213,6 @@ class UploadManager {
                             return { fileTypeInfo: null, metadata: null };
                         }
                         const fileTypeInfo = await UploadService.getFileType(
-                            reader,
                             file
                         );
                         if (fileTypeInfo.fileType === FILE_TYPE.OTHERS) {
@@ -290,15 +287,14 @@ class UploadManager {
             this.cryptoWorkers[i] = cryptoWorker;
             uploadProcesses.push(
                 this.uploadNextFileInQueue(
-                    await new this.cryptoWorkers[i].comlink(),
-                    new FileReader()
+                    await new this.cryptoWorkers[i].comlink()
                 )
             );
         }
         await Promise.all(uploadProcesses);
     }
 
-    private async uploadNextFileInQueue(worker: any, reader: FileReader) {
+    private async uploadNextFileInQueue(worker: any) {
         while (this.filesToBeUploaded.length > 0) {
             let fileWithCollection = this.filesToBeUploaded.pop();
             const { collectionID } = fileWithCollection;
@@ -306,13 +302,13 @@ class UploadManager {
                 this.existingFilesCollectionWise.get(collectionID) ?? [];
             const collection = this.collections.get(collectionID);
             fileWithCollection = { ...fileWithCollection, collection };
-            const { fileUploadResult, uploadedFile } = await uploader(
-                worker,
-                reader,
-                existingFilesInCollection,
-                this.existingFiles,
-                fileWithCollection
-            );
+            const { fileUploadResult, uploadedFile, skipDecryption } =
+                await uploader(
+                    worker,
+                    existingFilesInCollection,
+                    this.existingFiles,
+                    fileWithCollection
+                );
             UIService.moveFileToResultList(
                 fileWithCollection.localID,
                 fileUploadResult
@@ -321,6 +317,7 @@ class UploadManager {
             await this.postUploadTask(
                 fileUploadResult,
                 uploadedFile,
+                skipDecryption,
                 fileWithCollection
             );
         }
@@ -329,15 +326,17 @@ class UploadManager {
     async postUploadTask(
         fileUploadResult: FileUploadResults,
         uploadedFile: EnteFile,
+        skipDecryption: boolean,
         fileWithCollection: FileWithCollection
     ) {
         try {
             logUploadInfo(`uploadedFile ${JSON.stringify(uploadedFile)}`);
 
             if (
-                fileUploadResult === FileUploadResults.UPLOADED ||
-                fileUploadResult ===
-                    FileUploadResults.UPLOADED_WITH_STATIC_THUMBNAIL
+                (fileUploadResult === FileUploadResults.UPLOADED ||
+                    fileUploadResult ===
+                        FileUploadResults.UPLOADED_WITH_STATIC_THUMBNAIL) &&
+                !skipDecryption
             ) {
                 const decryptedFile = await decryptFile(
                     uploadedFile,
