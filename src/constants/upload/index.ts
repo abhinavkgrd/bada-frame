@@ -1,6 +1,10 @@
 import { ENCRYPTION_CHUNK_SIZE } from 'constants/crypto';
 import { FILE_TYPE } from 'constants/file';
-import { Location, ParsedExtractedMetadata } from 'types/upload';
+import {
+    Location,
+    ParsedExtractedMetadata,
+    ParsedMetadataJSON,
+} from 'types/upload';
 
 // list of format that were missed by type-detection for some files.
 export const FORMAT_MISSED_BY_FILE_TYPE_LIB = [
@@ -52,3 +56,9 @@ export const NULL_EXTRACTED_METADATA: ParsedExtractedMetadata = {
 };
 
 export const A_SEC_IN_MICROSECONDS = 1e6;
+
+export const NULL_PARSED_METADATA_JSON: ParsedMetadataJSON = {
+    creationTime: null,
+    modificationTime: null,
+    ...NULL_LOCATION,
+};

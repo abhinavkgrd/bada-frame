@@ -1,4 +1,8 @@
-import { MULTIPART_PART_SIZE, FILE_READER_CHUNK_SIZE } from 'constants/upload';
+import {
+    MULTIPART_PART_SIZE,
+    FILE_READER_CHUNK_SIZE,
+    NULL_PARSED_METADATA_JSON,
+} from 'constants/upload';
 import {
     FileTypeInfo,
     FileInMemory,
@@ -77,10 +81,14 @@ export async function extractFileMetadata(
     const googleMetadata =
         parsedMetadataJSONMap.get(
             getMetadataJSONMapKey(collectionID, originalName)
-        ) ?? {};
+        ) ?? NULL_PARSED_METADATA_JSON;
+
+    const hasGoogleMetadata = !!googleMetadata.creationTime;
+
     const extractedMetadata: Metadata = await extractMetadata(
         rawFile,
-        fileTypeInfo
+        fileTypeInfo,
+        hasGoogleMetadata
     );
 
     for (const [key, value] of Object.entries(googleMetadata)) {
