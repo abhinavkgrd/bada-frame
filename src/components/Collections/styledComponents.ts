@@ -7,13 +7,12 @@ export const CollectionListWrapper = styled(Box)`
     overflow: hidden;
     height: 86px;
     width: 100%;
+    border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
 `;
 
 export const CollectionListBarWrapper = styled(Box)`
-    width: 100%;
-    margin-bottom: 16px;
-    border-bottom: 1px solid ${({ theme }) => theme.palette.divider};
     ${SpecialPadding}
+    margin-bottom: 16px;
 `;
 
 export const CollectionInfoBarWrapper = styled(Box)`
@@ -23,13 +22,11 @@ export const CollectionInfoBarWrapper = styled(Box)`
 
 export const ScrollContainer = styled('div')`
     width: 100%;
-    height: 100px;
+    height: 120px;
     overflow: auto;
     scroll-behavior: smooth;
     display: flex;
-    & > *:not(:last-child) {
-        margin-right: 4px;
-    }
+    gap: 4px;
 `;
 
 export const CollectionTile = styled('div')`
@@ -62,13 +59,11 @@ export const CollectionBarTile = styled(CollectionTile)`
 export const AllCollectionTile = styled(CollectionTile)`
     width: 150px;
     height: 150px;
-    margin: 2px;
 `;
 
 export const ResultPreviewTile = styled(CollectionTile)`
     width: 48px;
     height: 48px;
-    border-radius: 4px;
 `;
 
 export const CollectionBarTileText = styled(Overlay)`
